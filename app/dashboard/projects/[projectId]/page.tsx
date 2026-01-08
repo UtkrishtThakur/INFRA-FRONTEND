@@ -8,7 +8,7 @@ import ApiKeyModal from "@/components/ApiKeyModal"
 import { apiFetch } from "@/lib/api"
 import { APIKey, Project } from "@/lib/types"
 
-const GATEWAY_URL = "https://gateway.antigravity.io"
+const GATEWAY_URL = "https://gateway.devlooper.co.in/"
 
 export default function ProjectDetailPage() {
     const { projectId } = useParams<{ projectId: string }>()
