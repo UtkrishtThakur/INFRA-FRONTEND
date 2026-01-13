@@ -31,3 +31,19 @@ export type DomainVerification = {
     host: string
     value: string
 }
+
+export interface EndpointAnalysis {
+    endpoint: string
+    severity: "NORMAL" | "WATCH" | "HIGH"
+    color: "green" | "yellow" | "red"
+    summary: string
+    rpm: number
+    throttle_percent: number
+    block_percent: number
+    average_rpm: number
+    typical_rpm: number
+    baseline_confidence?: string
+    securex_action: string
+    suggested_action?: string
+    request_volume: number
+}
