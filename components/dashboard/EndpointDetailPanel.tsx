@@ -60,9 +60,9 @@ export default function EndpointDetailPanel({
                             What&apos;s Happening Now
                         </h3>
                         <div className="grid grid-cols-3 gap-4">
-                            <StatBox label="Current RPM" value={data.rpm.toString()} />
-                            <StatBox label="Throttle" value={`${data.throttle_percent}%`} highlight={data.throttle_percent > 0} />
-                            <StatBox label="Block" value={`${data.block_percent}%`} highlight={data.block_percent > 0} />
+                            <StatBox label="Current RPM" value={data.metrics.current_rpm.toString()} />
+                            <StatBox label="Throttle" value={`${(data.metrics.throttle_rate * 100).toFixed(1)}%`} highlight={data.metrics.throttle_rate > 0} />
+                            <StatBox label="Block" value={`${(data.metrics.block_rate * 100).toFixed(1)}%`} highlight={data.metrics.block_rate > 0} />
                         </div>
                     </section>
 
@@ -73,19 +73,17 @@ export default function EndpointDetailPanel({
                         </h3>
                         <div className="bg-gray-50 rounded-lg p-4 space-y-3">
                             <div className="flex justify-between items-center text-sm">
-                                <span className="text-gray-600">Recent Average RPM</span>
-                                <span className="font-mono font-medium">{data.average_rpm}</span>
+                                <span className="text-gray-600">Baseline RPM</span>
+                                <span className="font-mono font-medium">{data.metrics.baseline_rpm}</span>
                             </div>
                             <div className="flex justify-between items-center text-sm">
-                                <span className="text-gray-600">Typical for this time</span>
-                                <span className="font-mono font-medium">{data.typical_rpm}</span>
+                                <span className="text-gray-600">Traffic Multiplier</span>
+                                <span className="font-mono font-medium">{data.metrics.traffic_multiplier}x</span>
                             </div>
-                            {data.baseline_confidence && (
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-600">Confidence</span>
-                                    <span className="font-mono text-gray-500">{data.baseline_confidence}</span>
-                                </div>
-                            )}
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="text-gray-600">Avg Risk Score</span>
+                                <span className="font-mono text-gray-500">{data.metrics.avg_risk_score.toFixed(2)}</span>
+                            </div>
                         </div>
                     </section>
 

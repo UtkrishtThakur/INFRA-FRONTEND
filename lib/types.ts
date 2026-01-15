@@ -37,13 +37,14 @@ export interface EndpointAnalysis {
     severity: "NORMAL" | "WATCH" | "HIGH"
     color: "green" | "yellow" | "red"
     summary: string
-    rpm: number
-    throttle_percent: number
-    block_percent: number
-    average_rpm: number
-    typical_rpm: number
-    baseline_confidence?: string
+    metrics: {
+        current_rpm: number
+        baseline_rpm: number
+        traffic_multiplier: number
+        throttle_rate: number
+        block_rate: number
+        avg_risk_score: number
+    }
     securex_action: string
-    suggested_action?: string
-    request_volume: number
+    suggested_action: string | null
 }

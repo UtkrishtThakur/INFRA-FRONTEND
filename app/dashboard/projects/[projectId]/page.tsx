@@ -62,18 +62,19 @@ export default function ProjectDetailPage() {
         setLoadingEndpoints(true)
         setEndpointError(false)
         try {
-            const res: EndpointAnalysis[] = await apiFetch(`/projects/${projectId}/endpoint-analysis`)
+            const res: { endpoints: EndpointAnalysis[] } = await apiFetch(`/projects/${projectId}/endpoint-analysis`)
+            const data = res.endpoints ?? []
 
             // Client-side sorting as per rules: 
             // 1. Severity (HIGH -> WATCH -> NORMAL)
             // 2. Request Volume (descending)
             const severityOrder = { HIGH: 0, WATCH: 1, NORMAL: 2 }
 
-            const sorted = res.sort((a, b) => {
+            const sorted = data.sort((a, b) => {
                 const sevA = severityOrder[a.severity] ?? 99
                 const sevB = severityOrder[b.severity] ?? 99
                 if (sevA !== sevB) return sevA - sevB
-                return b.request_volume - a.request_volume
+                return b.metrics.current_rpm - a.metrics.current_rpm
             })
 
             setEndpoints(sorted)
