@@ -30,6 +30,7 @@ export default function ProjectDetailPage() {
     const [rawKey, setRawKey] = useState<string | null>(null)
     const [showKeyModal, setShowKeyModal] = useState(false)
     const [loadingKey, setLoadingKey] = useState(false)
+    const [lastRefresh, setLastRefresh] = useState(0)
 
     // Initial Load
     useEffect(() => {
@@ -62,8 +63,12 @@ export default function ProjectDetailPage() {
         setLoadingEndpoints(true)
         setEndpointError(false)
         try {
-            const res: { endpoints: EndpointAnalysis[] } = await apiFetch(`/projects/${projectId}/endpoint-analysis`)
-            const data = res.endpoints ?? []
+            // Add time range parameter to ensure consistent metrics window
+            const timeRange = '1h' // Default to 1 hour window
+            const res = await apiFetch(`/projects/${projectId}/endpoint-analysis?time_range=${timeRange}`)
+
+            // Defensively handle response structure (array or object with endpoints key)
+            const data: EndpointAnalysis[] = Array.isArray(res) ? res : (res?.endpoints ?? [])
 
             // Client-side sorting as per rules: 
             // 1. Severity (HIGH -> WATCH -> NORMAL)
@@ -74,7 +79,8 @@ export default function ProjectDetailPage() {
                 const sevA = severityOrder[a.severity] ?? 99
                 const sevB = severityOrder[b.severity] ?? 99
                 if (sevA !== sevB) return sevA - sevB
-                return b.metrics.current_rpm - a.metrics.current_rpm
+                // Safe sorting with fallback for missing current_rpm
+                return (b.metrics?.current_rpm ?? 0) - (a.metrics?.current_rpm ?? 0)
             })
 
             setEndpoints(sorted)
@@ -160,9 +166,17 @@ export default function ProjectDetailPage() {
                 <section className="mb-12">
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="font-semibold text-lg">Endpoint Analysis</h2>
-                        {/* Optional refresh button, not strictly required but good for ux */}
+                        {/* Refresh with throttling to prevent API spam */}
                         <button
-                            onClick={loadEndpoints}
+                            onClick={() => {
+                                const now = Date.now()
+                                const REFRESH_COOLDOWN = 5000 // 5 seconds
+                                if (now - lastRefresh < REFRESH_COOLDOWN) {
+                                    return // Silently ignore rapid clicks
+                                }
+                                setLastRefresh(now)
+                                loadEndpoints()
+                            }}
                             disabled={loadingEndpoints}
                             className="text-sm text-gray-500 hover:text-black disabled:opacity-50"
                         >

@@ -60,9 +60,9 @@ export default function EndpointDetailPanel({
                             What&apos;s Happening Now
                         </h3>
                         <div className="grid grid-cols-3 gap-4">
-                            <StatBox label="Current RPM" value={data.metrics.current_rpm.toString()} />
-                            <StatBox label="Throttle" value={`${(data.metrics.throttle_rate * 100).toFixed(1)}%`} highlight={data.metrics.throttle_rate > 0} />
-                            <StatBox label="Block" value={`${(data.metrics.block_rate * 100).toFixed(1)}%`} highlight={data.metrics.block_rate > 0} />
+                            <StatBox label="Current RPM" value={(data.metrics?.current_rpm ?? 0).toString()} />
+                            <StatBox label="Throttle" value={`${((data.metrics?.throttle_rate ?? 0) * 100).toFixed(1)}%`} highlight={(data.metrics?.throttle_rate ?? 0) > 0} />
+                            <StatBox label="Block" value={`${((data.metrics?.block_rate ?? 0) * 100).toFixed(1)}%`} highlight={(data.metrics?.block_rate ?? 0) > 0} />
                         </div>
                     </section>
 
@@ -74,15 +74,15 @@ export default function EndpointDetailPanel({
                         <div className="bg-gray-50 rounded-lg p-4 space-y-3">
                             <div className="flex justify-between items-center text-sm">
                                 <span className="text-gray-600">Baseline RPM</span>
-                                <span className="font-mono font-medium">{data.metrics.baseline_rpm}</span>
+                                <span className="font-mono font-medium">{data.metrics?.baseline_rpm ?? 'N/A'}</span>
                             </div>
                             <div className="flex justify-between items-center text-sm">
                                 <span className="text-gray-600">Traffic Multiplier</span>
-                                <span className="font-mono font-medium">{data.metrics.traffic_multiplier}x</span>
+                                <span className="font-mono font-medium">{data.metrics?.traffic_multiplier ? `${data.metrics.traffic_multiplier}x` : 'N/A'}</span>
                             </div>
                             <div className="flex justify-between items-center text-sm">
                                 <span className="text-gray-600">Avg Risk Score</span>
-                                <span className="font-mono text-gray-500">{data.metrics.avg_risk_score.toFixed(2)}</span>
+                                <span className="font-mono text-gray-500">{data.metrics?.avg_risk_score != null ? data.metrics.avg_risk_score.toFixed(2) : 'N/A'}</span>
                             </div>
                         </div>
                     </section>
