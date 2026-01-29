@@ -1,24 +1,29 @@
 export default function DashboardSkeleton() {
-    // Create an array of 6 items to map over
     return (
-        <div className="flex flex-col gap-3 w-full">
-            {[...Array(6)].map((_, i) => (
+        <div className="flex flex-col gap-4 w-full">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div
                     key={i}
-                    className="relative flex h-24 w-full overflow-hidden rounded-lg bg-white border border-gray-100 animate-pulse"
+                    className="premium-card p-6 flex flex-col md:flex-row justify-between items-center gap-6"
                 >
-                    {/* Fake color bar */}
-                    <div className="w-2 bg-gray-200 shrink-0" />
-
-                    <div className="flex-1 p-4 flex flex-col gap-3">
-                        {/* Fake Path */}
-                        <div className="h-4 w-1/3 bg-gray-200 rounded" />
-
-                        {/* Fake Summary Lines */}
-                        <div className="space-y-2">
-                            <div className="h-3 w-3/4 bg-gray-100 rounded" />
-                            <div className="h-3 w-1/2 bg-gray-100 rounded" />
+                    <div className="flex items-center gap-4 w-full md:w-auto">
+                        <div className="w-10 h-10 rounded-lg bg-gray-50 animate-shimmer shrink-0"></div>
+                        <div className="space-y-2 w-full min-w-[200px]">
+                            <div className="h-4 bg-gray-50 rounded w-3/4 animate-shimmer"></div>
+                            <div className="h-3 bg-gray-50 rounded w-1/2 animate-shimmer"></div>
                         </div>
+                    </div>
+
+                    <div className="flex gap-8 w-full md:w-auto justify-between md:justify-end items-center">
+                        <div className="space-y-2">
+                            <div className="h-3 bg-gray-50 rounded w-12 animate-shimmer"></div>
+                            <div className="h-5 bg-gray-50 rounded w-16 animate-shimmer"></div>
+                        </div>
+                        <div className="space-y-2">
+                            <div className="h-3 bg-gray-50 rounded w-12 animate-shimmer"></div>
+                            <div className="h-5 bg-gray-50 rounded w-16 animate-shimmer"></div>
+                        </div>
+                        <div className="w-24 h-8 bg-gray-50 rounded-lg animate-shimmer"></div>
                     </div>
                 </div>
             ))}

@@ -63,23 +63,16 @@ export default function ProjectDetailPage() {
         setLoadingEndpoints(true)
         setEndpointError(false)
         try {
-            // Add time range parameter to ensure consistent metrics window
-            const timeRange = '1h' // Default to 1 hour window
+            const timeRange = '1h'
             const res = await apiFetch(`/projects/${projectId}/endpoint-analysis?time_range=${timeRange}`)
-
-            // Defensively handle response structure (array or object with endpoints key)
             const data: EndpointAnalysis[] = Array.isArray(res) ? res : (res?.endpoints ?? [])
 
-            // Client-side sorting as per rules: 
-            // 1. Severity (HIGH -> WATCH -> NORMAL)
-            // 2. Request Volume (descending)
             const severityOrder = { HIGH: 0, WATCH: 1, NORMAL: 2 }
 
             const sorted = data.sort((a, b) => {
                 const sevA = severityOrder[a.severity] ?? 99
                 const sevB = severityOrder[b.severity] ?? 99
                 if (sevA !== sevB) return sevA - sevB
-                // Safe sorting with fallback for missing current_rpm
                 return (b.metrics?.current_rpm ?? 0) - (a.metrics?.current_rpm ?? 0)
             })
 
@@ -94,8 +87,8 @@ export default function ProjectDetailPage() {
 
     async function createOrRegenerateKey() {
         const msg = keyMeta
-            ? "Regenerate API key? Old key will stop working."
-            : "Create API key?"
+            ? "Regenerate cluster API key? This will permanently invalidate the current key."
+            : "Generate deployment API key for this cluster?"
 
         if (!confirm(msg)) return
 
@@ -107,161 +100,160 @@ export default function ProjectDetailPage() {
 
             const key = res.api_key || res.key || res.token
 
-            if (!key) {
-                throw new Error("API did not return a key")
-            }
+            if (!key) throw new Error("API did not return a key")
 
             setRawKey(key)
             setShowKeyModal(true)
             await loadKey()
         } catch (e) {
             console.error(e)
-            alert("Failed to generate API key: " + (e instanceof Error ? e.message : "Unknown error"))
+            alert("Cryptographic operation failed: " + (e instanceof Error ? e.message : "Internal system collision."))
         } finally {
             setLoadingKey(false)
         }
     }
 
-    function closeKeyModal() {
-        setShowKeyModal(false)
-        setRawKey(null)
-    }
-
     async function deleteProject() {
-        if (!confirm("Delete this project? This cannot be undone.")) return
+        if (!confirm("Terminate this cluster and all associated policies? This action is irreversible.")) return
         await apiFetch(`/projects/${projectId}`, { method: "DELETE" })
         router.replace("/dashboard")
     }
 
     return (
         <Protected>
-            <Navbar />
+            <div className="min-h-screen bg-[#fafbfc]">
+                <Navbar />
 
-            <EndpointDetailPanel
-                isOpen={!!selectedEndpoint}
-                data={selectedEndpoint}
-                onClose={() => setSelectedEndpoint(null)}
-            />
+                <EndpointDetailPanel
+                    isOpen={!!selectedEndpoint}
+                    data={selectedEndpoint}
+                    onClose={() => setSelectedEndpoint(null)}
+                />
 
-            {showKeyModal && rawKey && (
-                <ApiKeyModal apiKey={rawKey} onClose={closeKeyModal} />
-            )}
+                {showKeyModal && rawKey && (
+                    <ApiKeyModal apiKey={rawKey} onClose={() => { setShowKeyModal(false); setRawKey(null); }} />
+                )}
 
-            <div className="p-6 max-w-3xl mx-auto pb-40">
-                <div className="flex justify-between items-center mb-8 pb-4 border-b border-gray-100">
-                    <div>
-                        <h1 className="text-2xl font-bold tracking-tight">{project?.name || "Project"}</h1>
-                        <p className="text-sm text-gray-500 font-mono mt-1">{project?.id}</p>
-                    </div>
+                <div className="p-8 max-w-6xl mx-auto pb-40">
+                    {/* --- Hero Section --- */}
+                    <div className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+                        <div>
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="badge-status bg-blue-500 text-white px-2">Cluster Active</span>
+                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-mono">ID: {project?.id}</span>
+                            </div>
+                            <h1 className="text-4xl font-black tracking-tight text-gray-900 leading-none">
+                                {project?.name || "Cluster Isolation"}
+                            </h1>
+                        </div>
 
-                    <button
-                        onClick={deleteProject}
-                        className="text-gray-400 px-3 py-1.5 hover:text-red-600 hover:bg-red-50 rounded text-sm transition-colors"
-                    >
-                        Delete Project
-                    </button>
-                </div>
-
-                {/* --- Main Section: Endpoint Analysis --- */}
-                <section className="mb-12">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="font-semibold text-lg">Endpoint Analysis</h2>
-                        {/* Refresh with throttling to prevent API spam */}
                         <button
-                            onClick={() => {
-                                const now = Date.now()
-                                const REFRESH_COOLDOWN = 5000 // 5 seconds
-                                if (now - lastRefresh < REFRESH_COOLDOWN) {
-                                    return // Silently ignore rapid clicks
-                                }
-                                setLastRefresh(now)
-                                loadEndpoints()
-                            }}
-                            disabled={loadingEndpoints}
-                            className="text-sm text-gray-500 hover:text-black disabled:opacity-50"
+                            onClick={deleteProject}
+                            className="btn-secondary text-red-500 border-red-100 hover:bg-red-50 hover:border-red-200"
                         >
-                            Refresh
+                            Terminate Cluster
                         </button>
                     </div>
 
-                    {loadingEndpoints ? (
-                        <DashboardSkeleton />
-                    ) : endpointError ? (
-                        <ErrorBanner onRetry={loadEndpoints} />
-                    ) : endpoints.length === 0 ? (
-                        // Empty State
-                        <div className="text-center py-12 px-4 rounded-lg bg-gray-50 border border-gray-100 mb-8">
-                            <h3 className="text-gray-900 font-medium mb-2">No traffic recorded yet.</h3>
-                            <p className="text-gray-500 max-w-sm mx-auto text-sm leading-relaxed">
-                                Once requests start flowing through SecureX, endpoint analysis will appear here automatically.
-                            </p>
-                        </div>
-                    ) : (
-                        // List
-                        <div className="flex flex-col gap-3">
-                            {endpoints.map((ep, idx) => (
-                                <EndpointCard
-                                    key={idx}
-                                    data={ep}
-                                    onClick={() => setSelectedEndpoint(ep)}
-                                />
-                            ))}
-                        </div>
-                    )}
-                </section>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                        {/* --- Left Column: Analytics --- */}
+                        <div className="lg:col-span-2 space-y-8">
+                            <section>
+                                <div className="flex justify-between items-center mb-6">
+                                    <h2 className="text-xs font-bold uppercase tracking-widest text-gray-400">Inbound Endpoint Audit</h2>
+                                    <button
+                                        onClick={() => {
+                                            const now = Date.now()
+                                            if (now - lastRefresh < 5000) return
+                                            setLastRefresh(now)
+                                            loadEndpoints()
+                                        }}
+                                        disabled={loadingEndpoints}
+                                        className="text-[10px] font-bold uppercase tracking-widest text-blue-600 hover:text-blue-700 disabled:opacity-50"
+                                    >
+                                        {loadingEndpoints ? "Synchronizing..." : "Force Refresh"}
+                                    </button>
+                                </div>
 
-                {/* --- Connection Info --- */}
-                <section className="border-t border-gray-100 pt-8 mt-12">
-                    <h2 className="font-semibold text-lg mb-6">Connection Details</h2>
-
-                    {/* Gateway Info */}
-                    <div className="bg-white border border-gray-200 p-6 rounded-lg mb-4 shadow-sm">
-                        <h2 className="text-sm font-semibold text-gray-900 mb-2">Gateway Endpoint</h2>
-                        <p className="text-sm text-gray-500 mb-3">
-                            Send all API requests to this URL:
-                        </p>
-                        <pre className="bg-gray-50 border border-gray-100 p-3 rounded font-mono text-sm text-gray-800 break-all">
-                            {GATEWAY_URL}
-                        </pre>
-                    </div>
-
-                    {/* API Key */}
-                    <div className="bg-white border border-gray-200 p-6 rounded-lg shadow-sm">
-                        <div className="flex justify-between items-start mb-4">
-                            <div>
-                                <h2 className="text-sm font-semibold text-gray-900 mb-1">API Key</h2>
-                                {keyMeta ? (
-                                    <div className="font-mono text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded inline-block border border-gray-200">
-                                        sk_live_••••{keyMeta.id.slice(-4)}
+                                {loadingEndpoints ? (
+                                    <DashboardSkeleton />
+                                ) : endpointError ? (
+                                    <ErrorBanner onRetry={loadEndpoints} />
+                                ) : endpoints.length === 0 ? (
+                                    <div className="premium-card py-20 px-8 text-center bg-white border-dashed">
+                                        <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <svg className="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167" /></svg>
+                                        </div>
+                                        <h3 className="text-gray-900 font-bold mb-1">Silence in the data plane.</h3>
+                                        <p className="text-gray-500 text-xs max-w-[240px] mx-auto leading-relaxed">
+                                            Telemetry will populate here as soon as traffic hits the gateway.
+                                        </p>
                                     </div>
                                 ) : (
-                                    <p className="text-sm text-gray-500">No API key yet</p>
+                                    <div className="flex flex-col gap-4">
+                                        {endpoints.map((ep, idx) => (
+                                            <EndpointCard
+                                                key={idx}
+                                                data={ep}
+                                                onClick={() => setSelectedEndpoint(ep)}
+                                            />
+                                        ))}
+                                    </div>
                                 )}
-                            </div>
-                            <button
-                                onClick={createOrRegenerateKey}
-                                disabled={loadingKey}
-                                className="text-sm bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 disabled:opacity-50 transition-colors"
-                            >
-                                {loadingKey
-                                    ? "Processing..."
-                                    : keyMeta
-                                        ? "Regenerate Key"
-                                        : "Create API Key"}
-                            </button>
+                            </section>
                         </div>
 
-                        {keyMeta && (
-                            <div className="mt-4 pt-4 border-t border-gray-100">
-                                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Example Request</p>
-                                <pre className="bg-gray-900 text-gray-100 p-4 rounded-md font-mono text-xs overflow-x-auto">
-                                    {`curl ${GATEWAY_URL}/your-endpoint \\
-  -H "x-api-key: YOUR_API_KEY"`}
-                                </pre>
-                            </div>
-                        )}
+                        {/* --- Right Column: Infrastructure --- */}
+                        <div className="space-y-8">
+                            <section>
+                                <h2 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-6 font-mono">Cluster Infrastructure</h2>
+
+                                <div className="space-y-6">
+                                    <div className="premium-card p-6 bg-white">
+                                        <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Inbound Logic</h3>
+                                        <div className="space-y-4">
+                                            <div>
+                                                <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">Gateway Entry Point</p>
+                                                <div className="bg-gray-900 p-3 rounded-lg flex items-center justify-between group">
+                                                    <span className="font-mono text-[10px] text-gray-100 truncate">{GATEWAY_URL}</span>
+                                                    <button
+                                                        onClick={() => navigator.clipboard.writeText(GATEWAY_URL)}
+                                                        className="text-gray-400 hover:text-white transition-colors"
+                                                    >
+                                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">Deployment Key</p>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex-1 bg-gray-50 border border-gray-100 p-3 rounded-lg font-mono text-[10px] text-gray-600">
+                                                        {keyMeta ? `sk_live_••••${keyMeta.id.slice(-4)}` : "None Provisioned"}
+                                                    </div>
+                                                    <button
+                                                        onClick={createOrRegenerateKey}
+                                                        disabled={loadingKey}
+                                                        className="btn-primary py-2 px-3 text-[10px] uppercase font-bold tracking-widest whitespace-nowrap"
+                                                    >
+                                                        {loadingKey ? "..." : keyMeta ? "Reset" : "Create"}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="premium-card p-6 bg-gray-50/50 border-gray-100">
+                                        <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Implementation Sample (Node.js)</h3>
+                                        <pre className="bg-gray-900 text-gray-100 p-4 rounded-xl font-mono text-[10px] overflow-x-auto leading-relaxed shadow-lg">
+                                            {`const axios = require('axios');\n\nawait axios.get('${GATEWAY_URL}v1/user', {\n  headers: {\n    'x-api-key': 'YOUR_KEY'\n  }\n});`}
+                                        </pre>
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
                     </div>
-                </section>
+                </div>
             </div>
         </Protected>
     )

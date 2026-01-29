@@ -32,73 +32,93 @@ export default function Dashboard() {
 
     return (
         <Protected>
-            <Navbar />
+            <div className="min-h-screen bg-[#fafbfc]">
+                <Navbar />
 
-            {showCreateModal && (
-                <CreateProjectModal onClose={() => setShowCreateModal(false)} />
-            )}
+                {showCreateModal && (
+                    <CreateProjectModal
+                        onClose={() => setShowCreateModal(false)}
+                        onCreated={loadProjects}
+                    />
+                )}
 
-            <div className="p-6 max-w-5xl mx-auto">
-                <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-2xl font-bold">Projects</h1>
-                    <button
-                        onClick={() => setShowCreateModal(true)}
-                        className="bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 transition-colors"
-                    >
-                        + New Project
-                    </button>
-                </div>
-
-                {loading ? (
-                    <div className="text-center py-10 text-gray-500">
-                        Loading projects...
-                    </div>
-                ) : projects.length === 0 ? (
-                    <div className="text-center py-20 border-2 border-dashed rounded-lg bg-gray-50">
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">
-                            No projects yet
-                        </h3>
-                        <p className="text-gray-500 mb-6">
-                            Create your first project to get started.
-                        </p>
+                <div className="p-8 max-w-6xl mx-auto">
+                    <header className="flex justify-between items-end mb-12">
+                        <div>
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="badge-status bg-black text-white px-2">Production</span>
+                                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Control Plane</span>
+                            </div>
+                            <h1 className="text-3xl font-bold tracking-tight text-gray-900 italic">Project Clusters</h1>
+                        </div>
                         <button
                             onClick={() => setShowCreateModal(true)}
-                            className="bg-black text-white px-4 py-2 rounded-md"
+                            className="btn-primary flex items-center gap-2"
                         >
-                            Create Project
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+                            New Project
                         </button>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {projects.map((p) => (
-                            <div
-                                key={p.id}
-                                className="border rounded-lg p-5 cursor-pointer hover:border-black hover:shadow-sm transition-all bg-white group"
-                                onClick={() =>
-                                    router.push(`/dashboard/projects/${p.id}`)
-                                }
-                            >
-                                <div className="flex justify-between items-start mb-3">
-                                    <div className="font-semibold text-lg group-hover:text-blue-600 transition-colors">
-                                        {p.name}
-                                    </div>
-                                    <span className="text-xs font-mono text-gray-400">
-                                        {p.id.slice(0, 8)}
-                                    </span>
-                                </div>
+                    </header>
 
-                                <div className="text-sm text-gray-600 truncate mb-4">
-                                    <span className="font-medium text-gray-900">Upstream:</span>{" "}
-                                    {p.upstream_base_url}
-                                </div>
-
-                                <div className="text-xs text-gray-400 mt-auto">
-                                    Created {new Date(p.created_at).toLocaleDateString()}
-                                </div>
+                    {loading ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {[1, 2, 3].map((i) => (
+                                <div key={i} className="premium-card p-6 h-48 animate-shimmer"></div>
+                            ))}
+                        </div>
+                    ) : projects.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-24 px-6 border border-dashed border-gray-200 rounded-2xl bg-white text-center">
+                            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                                <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
                             </div>
-                        ))}
-                    </div>
-                )}
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">Initialize Your First Project</h3>
+                            <p className="text-gray-500 max-w-sm mb-8 leading-relaxed">
+                                Establish a project to start routing traffic through the SecureX Edge and monitoring your upstream services.
+                            </p>
+                            <button
+                                onClick={() => setShowCreateModal(true)}
+                                className="btn-secondary"
+                            >
+                                Deploy New Project
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {projects.map((p) => (
+                                <div
+                                    key={p.id}
+                                    className="premium-card p-6 cursor-pointer flex flex-col group"
+                                    onClick={() => router.push(`/dashboard/projects/${p.id}`)}
+                                >
+                                    <div className="flex justify-between items-start mb-6">
+                                        <div className="font-bold text-lg tracking-tight group-hover:text-blue-600 transition-colors">
+                                            {p.name}
+                                        </div>
+                                        <div className="flex h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
+                                    </div>
+
+                                    <div className="space-y-4 mb-8">
+                                        <div>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Upstream Service</p>
+                                            <p className="text-xs font-mono text-gray-600 truncate bg-gray-50 p-2 rounded">
+                                                {p.upstream_base_url}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-auto pt-4 border-t border-gray-50 flex justify-between items-center">
+                                        <span className="text-[10px] text-gray-400 font-mono">
+                                            {p.id.slice(0, 8)}
+                                        </span>
+                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                            Act: {new Date(p.created_at).toLocaleDateString()}
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
         </Protected>
     )
