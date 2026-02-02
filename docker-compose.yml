@@ -1,13 +1,11 @@
 services:
   frontend:
-    build: .
+    container_name: nextjs-app
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"
-    volumes:
-      - .:/app
-      - /app/node_modules
     environment:
-      - NODE_ENV=development
-      - NEXT_DISABLE_TURBOPACK=1
-      - CHOKIDAR_USEPOLLING=true
-      - WATCHPACK_POLLING=true
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: "1"

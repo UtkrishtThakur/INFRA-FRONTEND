@@ -24,6 +24,9 @@ export default function Navbar() {
                     <Link href="/dashboard/analytics" className="text-sm font-medium text-gray-500 hover:text-black transition-colors">
                         Global Edge
                     </Link>
+                    <Link href="/docs" className="text-sm font-medium text-gray-500 hover:text-black transition-colors">
+                        Docs
+                    </Link>
                     <div className="h-4 w-px bg-gray-200"></div>
                     <button
                         onClick={() => {
