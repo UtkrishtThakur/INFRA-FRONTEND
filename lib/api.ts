@@ -29,6 +29,12 @@ export async function apiFetch(
     })
 
     if (!res.ok) {
+        if (res.status === 401) {
+            if (typeof window !== "undefined") {
+                localStorage.removeItem("token")
+                window.location.href = "/login?expired=true"
+            }
+        }
         const text = await res.text()
         throw new Error(text || "API error")
     }
