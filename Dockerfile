@@ -1,18 +1,69 @@
-FROM node:20-alpine
+# syntax=docker/dockerfile:1
+
+FROM node:20-alpine AS base
 
 WORKDIR /app
 
-# Install dependencies
+RUN apk add --no-cache libc6-compat
+
+# =========================
+# Dependencies
+# =========================
+
+FROM base AS deps
+
 COPY package.json package-lock.json ./
-RUN npm install
 
-# Copy ENTIRE workspace (no cherry-picking)
+RUN npm ci
+
+# =========================
+# Development
+# =========================
+
+FROM base AS dev
+
+ENV NODE_ENV=development
+
+COPY --from=deps /app/node_modules ./node_modules
+
 COPY . .
-
-# Build Next.js properly (this was the missing piece before)
-RUN npm run build
 
 EXPOSE 3000
 
-# Run production server (stable, no watchers)
+CMD ["npm", "run", "dev"]
+
+# =========================
+# Builder
+# =========================
+
+FROM base AS builder
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+COPY --from=deps /app/node_modules ./node_modules
+
+COPY . .
+
+RUN npm run build
+
+# =========================
+# Production Runner
+# =========================
+
+FROM base AS runner
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+
+WORKDIR /app
+
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
+
+EXPOSE 3000
+
 CMD ["npm", "run", "start"]

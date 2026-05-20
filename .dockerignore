@@ -1,3 +1,8 @@
 node_modules
 .next
 .git
+Dockerfile*
+docker-compose*
+npm-debug.log
+.env
+.env.local
