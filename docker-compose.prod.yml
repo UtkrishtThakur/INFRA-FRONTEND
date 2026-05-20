@@ -33,7 +33,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-public"
 
-      - "traefik.http.routers.nextjs.rule=Host(`YOUR_DOMAIN.devlooper.co.in`)"
+      - "traefik.http.routers.nextjs.rule=Host(`securex.devlooper.co.in`)"
       - "traefik.http.routers.nextjs.entrypoints=web"
 
       - "traefik.http.services.nextjs.loadbalancer.server.port=3000"
